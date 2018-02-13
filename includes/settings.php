@@ -112,16 +112,16 @@ function get_api_test_result( $api_key ) {
 		$api_root_result = wp_remote_get( 'https://us3.api.mailchimp.com/3.0/', array(
 			'headers' => array(
 				'Authorization' => 'apikey ' . esc_attr( $api_key ),
-			)
+			),
 		) );
 
 		if ( 401 === absint( wp_remote_retrieve_response_code( $api_root_result ) ) ) {
 			$response_data = wp_remote_retrieve_body( $api_root_result );
 			$response_data = json_decode( $response_data );
 			$recent_result = 'Error: ' . esc_html( $response_data->detail );
-		} else if ( is_wp_error( $api_root_result ) ) {
+		} elseif ( is_wp_error( $api_root_result ) ) {
 			$recent_result = 'Error: ' . $api_root_result->get_error_message();
-		} else if ( 200 == absint( wp_remote_retrieve_response_code( $api_root_result ) ) ) {
+		} elseif ( 200 === absint( wp_remote_retrieve_response_code( $api_root_result ) ) ) {
 			$response_data = wp_remote_retrieve_body( $api_root_result );
 			$response_data = json_decode( $response_data );
 
@@ -150,5 +150,5 @@ function display_sme_api_key_field() {
 	}
 
 	?><input id="sme_api_key" name="sme_api_key" type="text" value="<?php echo esc_attr( $sme_api_key ); ?>" class="regular-text" /><br />
-	<p class="description"><?php echo $recent_result; ?></p><?php
+	<p class="description"><?php echo esc_html( $recent_result ); ?></p><?php
 }
