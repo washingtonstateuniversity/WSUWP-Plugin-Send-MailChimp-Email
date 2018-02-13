@@ -30,6 +30,14 @@ function register() {
  * @return string Sanitized MailChimp API key
  */
 function sanitize_sme_api_key( $value ) {
+	$current_key = get_option( 'sme_api_key', '' );
+
+	$value = sanitize_text_field( $value );
+
+	if ( $value !== $current_key ) {
+		delete_transient( 'sme_api_result' );
+	}
+
 	return $value;
 }
 
@@ -87,10 +95,60 @@ function page_html() {
 }
 
 /**
+ * Validate a saved MailChimp API key by making a REST call to the root
+ * endpoint.
+ *
+ * Stores the result in a 24 hour cache/transient to avoid repeat calls for
+ * the same API value.
+ *
+ * @param string $api_key The API key to test.
+ *
+ * @return string The message to display in response.
+ */
+function get_api_test_result( $api_key ) {
+	$recent_result = get_transient( 'sme_api_result' );
+
+	if ( ! $recent_result ) {
+		$api_root_result = wp_remote_get( 'https://us3.api.mailchimp.com/3.0/', array(
+			'headers' => array(
+				'Authorization' => 'apikey ' . esc_attr( $api_key ),
+			)
+		) );
+
+		if ( 401 === absint( wp_remote_retrieve_response_code( $api_root_result ) ) ) {
+			$response_data = wp_remote_retrieve_body( $api_root_result );
+			$response_data = json_decode( $response_data );
+			$recent_result = 'Error: ' . esc_html( $response_data->detail );
+		} else if ( is_wp_error( $api_root_result ) ) {
+			$recent_result = 'Error: ' . $api_root_result->get_error_message();
+		} else if ( 200 == absint( wp_remote_retrieve_response_code( $api_root_result ) ) ) {
+			$response_data = wp_remote_retrieve_body( $api_root_result );
+			$response_data = json_decode( $response_data );
+
+			$recent_result = 'Valid API key registered to ' . esc_html( $response_data->account_name );
+
+			// Store this valid API result for 24 hours.
+			set_transient( 'sme_api_result', $recent_result, 24 * HOUR_IN_SECONDS );
+		} else {
+			$recent_result = 'Error: Unknown ' . absint( wp_remote_retrieve_response_code( $api_root_result ) );
+		}
+	}
+
+	return $recent_result;
+}
+
+/**
  * Display the HTML used to capture the MailChimp API key.
  */
 function display_sme_api_key_field() {
 	$sme_api_key = get_option( 'sme_api_key', '' );
 
-	?><input id="sme_api_key" name="sme_api_key" type="text" value="<?php echo esc_attr( $sme_api_key ); ?>" class="regular-text" /><?php
+	if ( '' !== $sme_api_key ) {
+		$recent_result = get_api_test_result( $sme_api_key );
+	} else {
+		$recent_result = 'Enter your MailChimp API key';
+	}
+
+	?><input id="sme_api_key" name="sme_api_key" type="text" value="<?php echo esc_attr( $sme_api_key ); ?>" class="regular-text" /><br />
+	<p class="description"><?php echo $recent_result; ?></p><?php
 }
