@@ -1,9 +1,9 @@
 <?php
 
-namespace WSUWP\Send_MailChimp_Email\Settings;
+namespace WSUWP\MailChimp\Settings;
 
-add_action( 'admin_init', 'WSUWP\Send_MailChimp_Email\Settings\register' );
-add_action( 'admin_menu', 'WSUWP\Send_MailChimp_Email\Settings\register_page' );
+add_action( 'admin_init', 'WSUWP\MailChimp\Settings\register' );
+add_action( 'admin_menu', 'WSUWP\MailChimp\Settings\register_page' );
 
 /**
  * Register the options used by Send MailChimp Email in its settings page.
@@ -14,7 +14,7 @@ function register() {
 	\register_setting( 'sme_group', 'sme_api_key', array(
 		'type' => 'string',
 		'description' => 'A MailChimp API key',
-		'sanitize_callback' => 'WSUWP\Send_MailChimp_Email\Settings\sanitize_sme_api_key',
+		'sanitize_callback' => 'WSUWP\MailChimp\Settings\sanitize_sme_api_key',
 		'show_in_rest' => false,
 		'default' => '',
 	) );
@@ -48,10 +48,10 @@ function sanitize_sme_api_key( $value ) {
  * @since 0.0.1
  */
 function register_page() {
-	$page = add_submenu_page( 'options-general.php', 'MailChimp Settings', 'MailChimp', 'manage_options', 'sme', 'WSUWP\Send_MailChimp_Email\Settings\page_html' );
+	$page = add_submenu_page( 'options-general.php', 'MailChimp Settings', 'MailChimp', 'manage_options', 'sme', 'WSUWP\MailChimp\Settings\page_html' );
 
 	add_settings_section( 'sme_api', 'API Information', '', $page );
-	add_settings_field( 'sme_api_key', 'API Key', 'WSUWP\Send_MailChimp_Email\Settings\display_sme_api_key_field', $page, 'sme_api', array(
+	add_settings_field( 'sme_api_key', 'API Key', 'WSUWP\MailChimp\Settings\display_sme_api_key_field', $page, 'sme_api', array(
 		'label_for' => 'sme_api_key',
 	) );
 }
