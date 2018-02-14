@@ -56,3 +56,52 @@ function register_post_type() {
 
 	\register_post_type( post_type_slug(), $args );
 }
+
+/**
+ * Create a new campaign in MailChimp.
+ *
+ * @since 0.0.1
+ *
+ * @param string $list_id
+ * @param string $title
+ *
+ * @return object|\WP_Error
+ */
+function create_campaign( $list_id, $title ) {
+	$campaign_args = array(
+		'type' => 'regular',
+		'recipients' => array(
+			'list_id' => '', // Need data
+		),
+		'settings' => array(
+			'subject_line' => '', // Need data
+			'preview_text' => '', // Need data
+			'title'        => $title, // Campaign title
+			'from_name'    => '', // Need data
+			'reply_to'     => '', // Need data
+		),
+	);
+
+	$campaign_args = wp_json_encode( $campaign_args );
+	$api_key = \WSUWP\MailChimp\Settings\get_api_key();
+
+	$response = wp_remote_post( \WSUWP\MailChimp\Settings\get_api_url( 'campaigns' ), array(
+		'body'    => $campaign_args,
+		'headers' => array(
+			'Authentication' => 'apikey ' . esc_attr( $api_key ),
+		),
+	) );
+
+	if ( 200 === absint( wp_remote_retrieve_response_code( $response ) ) ) {
+		$response = json_decode( wp_remote_retrieve_body( $response ) );
+
+		$campaign_id = (object) array(
+			'id' => $response->id,
+			'web_id' => $response->web_id,
+		);
+	} else {
+		$campaign_id = new \WP_Error( wp_remote_retrieve_response_message( $response ) );
+	}
+
+	return $campaign_id;
+}

@@ -21,6 +21,38 @@ function register() {
 }
 
 /**
+ * Retrieve the stored MailChimp API key.
+ *
+ * @since 0.0.1
+ *
+ * @return string
+ */
+function get_api_key() {
+	$sme_api_key = get_option( 'sme_api_key', '' );
+
+	return $sme_api_key;
+}
+
+/**
+ * Return the URL to use for a MailChimp API method.
+ *
+ * @since 0.0.1
+ *
+ * @param string $method
+ *
+ * @return string
+ */
+function get_api_url( $method = '' ) {
+	$api_base = 'https://us3.api.mailchimp.com/3.0/';
+
+	if ( 'campaigns' === $method ) {
+		return $api_base . 'campaigns';
+	}
+
+	return $api_base;
+}
+
+/**
  * Sanitize the MailChimp API key value before it is stored.
  *
  * @since 0.0.1
@@ -30,7 +62,7 @@ function register() {
  * @return string Sanitized MailChimp API key
  */
 function sanitize_sme_api_key( $value ) {
-	$current_key = get_option( 'sme_api_key', '' );
+	$current_key = get_api_key();
 
 	$value = sanitize_text_field( $value );
 
@@ -141,7 +173,7 @@ function get_api_test_result( $api_key ) {
  * Display the HTML used to capture the MailChimp API key.
  */
 function display_sme_api_key_field() {
-	$sme_api_key = get_option( 'sme_api_key', '' );
+	$sme_api_key = get_api_key();
 
 	if ( '' !== $sme_api_key ) {
 		$recent_result = get_api_test_result( $sme_api_key );
